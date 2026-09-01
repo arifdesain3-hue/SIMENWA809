@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIMENWA Satuan 809 - Sistem Informasi Terintegrasi</title>
+    
+    <!-- Bootstrap 5 CSS & FontAwesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- SheetJS Export & Import -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        :root { --primary-navy: #1b2a47; --accent-gold: #d4af37; --bg-light: #f4f6f9; }
+        body { background-color: var(--bg-light); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar-custom { background-color: var(--primary-navy); border-bottom: 3px solid var(--accent-gold); }
+        .brand-logo { font-weight: 800; color: #ffffff !important; letter-spacing: 1px; }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .card-header-navy { background-color: var(--primary-navy); color: #ffffff; font-weight: 600; border-top-left-radius: 12px !important; border-top-right-radius: 12px !important;}
+        .table-custom th { background-color: #2c3e50; color: #ffffff; font-size: 0.9rem; }
+        .table-custom td { font-size: 0.88rem; }
+        .nav-tabs .nav-link.active { font-weight: bold; color: var(--primary-navy); border-bottom: 3px solid var(--accent-gold); }
+        .live-badge { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(13, 20, 36, 0.96); z-index: 9999;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .absen-row { background: #fff; padding: 8px 12px; border-radius: 6px; margin-bottom: 6px; border: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body>
+
+    <!-- OVERLAY LOGIN -->
+    <div id="loginOverlay">
+        <div class="card p-4 shadow-lg" style="max-width: 420px; width: 90%; border-top: 4px solid var(--accent-gold);">
+            <div class="text-center mb-3 text-warning">
+                <i class="fa-solid fa-shield-halved fs-1"></i>
+            </div>
+            <h4 class="fw-bold text-dark text-center mb-1">SIMENWA SATUAN 809</h4>
+            <p class="text-muted small text-center mb-4">Portal Log In Pengurus & Komando</p>
+
+            <form id="formLogin">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Username</label>
+                    <input type="text" id="inputUser" class="form-control" placeholder="Contoh: komandan809 / personalia" required autofocus>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Kata Sandi</label>
+                    <input type="password" id="inputPass" class="form-control" placeholder="******" required>
+                </div>
+                <div id="errorLogin" class="alert alert-danger py-1 small d-none">Username atau Password Salah!</div>
+                <button type="submit" class="btn btn-primary w-100 fw-bold py-2">
+                    <i class="fa-solid fa-right-to-bracket me-1"></i> Masuk Ke Database
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP WEBSITE -->
+    <div id="mainApp" style="display: none;">
+        
+        <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top shadow-sm">
+            <div class="container">
+                <a class="navbar-brand brand-logo d-flex align-items-center gap-2" href="#">
+                    <i class="fa-solid fa-shield-halved text-warning fs-3"></i>
+                    <span>SIMENWA 809 <small class="fs-6 fw-normal text-warning">(V5 - KALENDER AKADEMIK)</small></span>
+                </a>
+                <div class="ms-auto d-flex align-items-center gap-3">
+                    <span id="badgeUserRole" class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold"></span>
+                    <button class="btn btn-outline-light btn-sm" onclick="logout()" title="Keluar">
+                        <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container my-4">
+
+            <!-- TAB NAVIGASI KATEGORI DATA -->
+            <ul class="nav nav-tabs mb-4 border-bottom-0" id="dataTabs">
+                <li class="nav-item">
+                    <button class="nav-link active" onclick="switchCategory('kegiatan')">
+                        <i class="fa-solid fa-calendar-check me-2"></i>Data Kegiatan
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" onclick="switchCategory('akademik')">
+                        <i class="fa-solid fa-graduation-cap me-2 text-warning"></i>Kalender Akademik
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" onclick="switchCategory('personel')">
+                        <i class="fa-solid fa-users me-2"></i>Data Personel
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" onclick="switchCategory('absensi')">
+                        <i class="fa-solid fa-list-check me-2 text-primary"></i>Absensi Massal
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" onclick="switchCategory('logistik')">
+                        <i class="fa-solid fa-boxes-stacked me-2"></i>Logistik
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" onclick="switchCategory('surat')">
+                        <i class="fa-solid fa-envelope-open-text me-2"></i>Arsip Surat
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" onclick="switchCategory('bebas')">
+                        <i class="fa-solid fa-folder-plus me-2"></i>Catatan Bebas
+                    </button>
+                </li>
+            </ul>
+
+            <div class="row g-4">
+                <!-- FORM INPUT DINAMIS / PANEL ABSENSI CHECKLIST -->
+                <div class="col-lg-5">
+                    <div class="card">
+                        <div class="card-header card-header-navy" id="formHeaderTitle">
+                            <i class="fa-solid fa-pen-to-square me-2"></i>Input Data
+                        </div>
+                        <div class="card-body">
+                            <div id="formFieldsContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABEL DATA REALTIME DYNAMIC -->
+                <div class="col-lg-7">
+                    <div class="card">
+                        <div class="card-header bg-dark text-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+                            <span id="tableHeaderTitle"><i class="fa-solid fa-database me-2"></i>Database Terintegrasi</span>
+                            <div class="d-flex gap-2">
+                                <button id="btnImporExcel" class="btn btn-primary btn-sm" onclick="document.getElementById('fileExcelInput').click()">
+                                    <i class="fa-solid fa-file-import me-1"></i> Impor Excel
+                                </button>
+                                <input type="file" id="fileExcelInput" accept=".xlsx, .xls, .csv" style="display: none;" onchange="prosesImporExcel(this)">
+
+                                <button class="btn btn-success btn-sm" onclick="exportExcel()">
+                                    <i class="fa-solid fa-file-excel me-1"></i> Ekspor Excel
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- FILTER / PENCARIAN REALTIME -->
+                        <div class="p-2 bg-light border-bottom">
+                            <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="🔍 Cari data secara realtime..." onkeyup="filterData()">
+                        </div>
+
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0 table-custom">
+                                    <thead id="tableHead"></thead>
+                                    <tbody id="tableBody">
+                                        <tr><td colspan="6" class="text-center py-4 text-muted">Menghubungkan ke Cloud...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Modular (v10) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue, remove, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // =========================================================================
+        // PENGATURAN USERS & HAK AKSES RESMI PEMETAAN SATUAN 809
+        // =========================================================================
+        const USERS_DB = {
+            "komandan809":  { pass: "apaansih809", name: "Komandan Satuan", role: "Komandan", canDelete: true, allowedModules: ["kegiatan","akademik","personel","absensi","logistik","surat","bebas"] },
+            "wadan809":     { pass: "apaansih809", name: "Wakil Komandan", role: "Wadan", canDelete: true, allowedModules: ["kegiatan","akademik","personel","absensi","logistik","surat","bebas"] },
+            "dankima":      { pass: "dankima809", name: "Dankima", role: "Dankima", canDelete: false, allowedModules: ["kegiatan","logistik","bebas"] },
+            "personalia":   { pass: "personalia2026", name: "Kasi Personalia", role: "Personalia", canDelete: false, allowedModules: ["personel","absensi","bebas"] },
+            "kaset":        { pass: "sekretariat809", name: "Kepala Sekretariatan", role: "Kaset", canDelete: false, allowedModules: ["kegiatan","akademik","surat","bebas"] },
+            "kaurmin":      { pass: "administrasi2026", name: "Kaurmin", role: "Kaurmin", canDelete: false, allowedModules: ["akademik","logistik","surat","bebas"] }
+        };
+
+        let currentUser = JSON.parse(sessionStorage.getItem("activeUser")) || null;
+
+        if (currentUser) {
+            document.getElementById("loginOverlay").style.display = "none";
+            document.getElementById("mainApp").style.display = "block";
+            document.getElementById("badgeUserRole").innerHTML = `<i class="fa-solid fa-user-shield me-1"></i> ${currentUser.name} (${currentUser.role})`;
+        }
+
+        document.getElementById("formLogin").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const u = document.getElementById("inputUser").value.trim().toLowerCase();
+            const p = document.getElementById("inputPass").value.trim();
+
+            if (USERS_DB[u] && USERS_DB[u].pass === p) {
+                currentUser = USERS_DB[u];
+                sessionStorage.setItem("activeUser", JSON.stringify(currentUser));
+                document.getElementById("loginOverlay").style.display = "none";
+                document.getElementById("mainApp").style.display = "block";
+                document.getElementById("badgeUserRole").innerHTML = `<i class="fa-solid fa-user-shield me-1"></i> ${currentUser.name} (${currentUser.role})`;
+                renderForm();
+                listenRealtimeData();
+            } else {
+                document.getElementById("errorLogin").classList.remove("d-none");
+            }
+        });
+
+        window.logout = function() {
+            sessionStorage.removeItem("activeUser");
+            location.reload();
+        };
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6GrqJ0LPVmNQzb4Kumi5S-ZBxM5_xEWI",
+            authDomain: "simenwa809.firebaseapp.com",
+            databaseURL: "https://simenwa809-default-rtdb.firebaseio.com",
+            projectId: "simenwa809",
+            storageBucket: "simenwa809.firebasestorage.app",
+            messagingSenderId: "605669811552",
+            appId: "1:605669811552:web:ec8a1b2cf668fc0b162a05",
+            measurementId: "G-11456CWPGJ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let currentCategory = 'kegiatan';
+        let rawDataStore = {};
+
+        const schema = {
+            kegiatan: {
+                title: "Data Kegiatan & Acara",
+                fields: [
+                    { id: "field1", label: "Nama Kegiatan / Acara", type: "text", placeholder: "Contoh: Diksar Provost / Upacara", key: "nama_kegiatan" },
+                    { id: "field2", label: "Tanggal Pelaksanaan", type: "date", key: "tanggal" },
+                    { id: "field3", label: "Lokasi / Tempat", type: "text", placeholder: "Mako / Lapangan", key: "lokasi" },
+                    { id: "field4", label: "Penanggung Jawab (PJ)", type: "text", placeholder: "Nama / Jabatan PJ", key: "pj" },
+                    { id: "field5", label: "Link Lampiran / Proposal", type: "url", placeholder: "https://drive.google.com/...", key: "link" },
+                    { id: "field6", label: "Status Kegiatan", type: "select", options: ["Rencana", "Berjalan", "Selesai", "Dibatalkan"], key: "status" }
+                ],
+                headers: ["Nama Kegiatan", "Tanggal", "Lokasi", "PJ", "Doc", "Status"]
+            },
+            akademik: {
+                title: "Kalender Akademik Kampus",
+                fields: [
+                    { id: "field1", label: "Agenda / Peristiwa Akademik", type: "text", placeholder: "Contoh: UTS Semester Ganjil / KRS", key: "agenda" },
+                    { id: "field2", label: "Tanggal Mulai", type: "date", key: "tgl_mulai" },
+                    { id: "field3", label: "Tanggal Selesai", type: "date", key: "tgl_selesai" },
+                    { id: "field4", label: "Kategori Agenda", type: "select", options: ["Perkuliahan", "Ujian (UTS/UAS)", "Administrasi/KRS", "Libur Semester", "Wisuda / Acara"], key: "kategori" },
+                    { id: "field5", label: "Keterangan / Catatan", type: "text", placeholder: "Keterangan tambahan...", key: "keterangan" }
+                ],
+                headers: ["Agenda Akademik", "Tgl Mulai", "Tgl Selesai", "Kategori", "Keterangan"]
+            },
+            personel: {
+                title: "Data Personel",
+                fields: [
+                    { id: "field1", label: "NBP / NPM", type: "text", placeholder: "Contoh: 809.2024.001 / 2213...", key: "nbp_npm" },
+                    { id: "field2", label: "Nama Lengkap", type: "text", placeholder: "Nama Anggota", key: "nama" },
+                    { id: "field3", label: "Pangkat / Jabatan", type: "text", placeholder: "Danwa / Staf Prov / Anggota", key: "jabatan" },
+                    { id: "field4", label: "Link Foto Profil (Opsional)", type: "url", placeholder: "https://...", key: "link_foto" },
+                    { id: "field5", label: "Status", type: "select", options: ["Aktif", "Purna Tugas", "Demisioner"], key: "status" }
+                ],
+                headers: ["NBP / NPM", "Nama", "Jabatan", "Foto", "Status"]
+            },
+            absensi: {
+                title: "Rekap Absensi Kegiatan (Checklist Massal)",
+                headers: ["Kegiatan", "Tanggal", "Nama Anggota", "Presensi", "Keterangan"]
+            },
+            logistik: {
+                title: "Data Logistik & Perlengkapan",
+                fields: [
+                    { id: "field1", label: "Nama Barang", type: "text", placeholder: "Baret, Koprim, HT, dll", key: "barang" },
+                    { id: "field2", label: "Jumlah / Kuantitas", type: "number", placeholder: "10", key: "jumlah" },
+                    { id: "field3", label: "Kondisi", type: "select", options: ["Baik", "Rusak Ringan", "Rusak Berat"], key: "kondisi" },
+                    { id: "field4", label: "Lokasi / PJ", type: "text", placeholder: "Gudang Mako / Prov", key: "lokasi" }
+                ],
+                headers: ["Barang", "Jumlah", "Kondisi", "Lokasi/PJ"]
+            },
+            surat: {
+                title: "Arsip Surat & Dokumen",
+                fields: [
+                    { id: "field1", label: "Nomor Surat", type: "text", placeholder: "015/B/Sat-809/2026", key: "no_surat" },
+                    { id: "field2", label: "Perihal / Judul", type: "text", placeholder: "Surat Perintah Training Provost", key: "perihal" },
+                    { id: "field3", label: "Jenis Surat", type: "select", options: ["Surat Masuk", "Surat Keluar", "Surat Keputusan (SK)"], key: "jenis" },
+                    { id: "field4", label: "Tanggal Dokumen", type: "date", key: "tanggal" },
+                    { id: "field5", label: "Link Scan File PDF", type: "url", placeholder: "https://...", key: "link" }
+                ],
+                headers: ["No. Surat", "Perihal", "Jenis", "Tanggal", "File"]
+            },
+            bebas: {
+                title: "Catatan & Input Bebas",
+                fields: [
+                    { id: "field1", label: "Judul Catatan / Perihal", type: "text", placeholder: "Agenda Rapat / Kas Masuk", key: "judul" },
+                    { id: "field2", label: "Kategori / Label", type: "text", placeholder: "Keuangan / Internal", key: "kategori" },
+                    { id: "field3", label: "Keterangan Lengkap", type: "textarea", placeholder: "Isi keterangan bebas...", key: "keterangan" }
+                ],
+                headers: ["Judul", "Kategori", "Keterangan", "Waktu Input"]
+            }
+        };
+
+        window.switchCategory = function(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('#dataTabs .nav-link').forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            document.getElementById("searchInput").value = "";
+            renderForm();
+            listenRealtimeData();
+        };
+
+        function renderForm() {
+            const config = schema[currentCategory];
+            document.getElementById("formHeaderTitle").innerHTML = `<i class="fa-solid fa-pen-to-square me-2"></i>${config.title}`;
+            document.getElementById("tableHeaderTitle").innerHTML = `<i class="fa-solid fa-database me-2"></i>Database ${config.title}`;
+
+            const container = document.getElementById("formFieldsContainer");
+            const btnImpor = document.getElementById("btnImporExcel");
+
+            const isAllowed = currentUser && currentUser.allowedModules.includes(currentCategory);
+
+            if (!isAllowed) {
+                container.innerHTML = `
+                    <div class="alert alert-warning text-center py-4 mb-0">
+                        <i class="fa-solid fa-lock fs-2 text-warning mb-2"></i>
+                        <h6 class="fw-bold">Akses Modul Terkunci</h6>
+                        <p class="small text-muted mb-0">Jabatan Anda (<strong>${currentUser.role}</strong>) tidak memiliki wewenang menginput/mengubah data di kategori ini.</p>
+                    </div>
+                `;
+                if(btnImpor) btnImpor.style.display = "none";
+                return;
+            }
+
+            if(btnImpor) btnImpor.style.display = "inline-block";
+
+            if (currentCategory === 'absensi') {
+                container.innerHTML = `
+                    <form id="formAbsenMassal">
+                        <div class="mb-2">
+                            <label class="small fw-bold">Nama Kegiatan</label>
+                            <input type="text" id="absenKegiatan" class="form-control form-control-sm" required placeholder="Contoh: Training Provost 2026">
+                        </div>
+                        <div class="mb-3">
+                            <label class="small fw-bold">Tanggal Kegiatan</label>
+                            <input type="date" id="absenTanggal" class="form-control form-control-sm" required>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small fw-bold text-primary"><i class="fa-solid fa-users me-1"></i>Daftar Presensi Anggota:</span>
+                        </div>
+                        
+                        <div id="daftarAnggotaChecklist" style="max-height: 280px; overflow-y: auto;" class="p-1 border rounded bg-light">
+                            <div class="text-center py-3 text-muted small">Memuat daftar personel...</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold mt-3">
+                            <i class="fa-solid fa-cloud-arrow-up me-1"></i> Simpan Absensi Massal
+                        </button>
+                    </form>
+                `;
+                loadAnggotaChecklist();
+                document.getElementById("formAbsenMassal").addEventListener("submit", simpanAbsenMassal);
+                return;
+            }
+
+            let fieldsHtml = `<form id="dynamicForm">`;
+            config.fields.forEach(f => {
+                let inputHtml = "";
+                if (f.type === "select") {
+                    const opts = f.options.map(o => `<option value="${o}">${o}</option>`).join("");
+                    inputHtml = `<select id="${f.id}" class="form-select form-select-sm">${opts}</select>`;
+                } else if (f.type === "textarea") {
+                    inputHtml = `<textarea id="${f.id}" class="form-control form-control-sm" rows="3" placeholder="${f.placeholder || ''}"></textarea>`;
+                } else {
+                    inputHtml = `<input type="${f.type}" id="${f.id}" class="form-control form-control-sm" ${f.type !== 'date' && f.type !== 'url' ? 'required' : ''} placeholder="${f.placeholder || ''}">`;
+                }
+
+                fieldsHtml += `<div class="mb-2"><label class="small fw-bold">${f.label}</label>${inputHtml}</div>`;
+            });
+            fieldsHtml += `
+                <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold mt-3">
+                    <i class="fa-solid fa-cloud-arrow-up me-1"></i> Simpan Ke Database Live
+                </button>
+            </form>`;
+
+            container.innerHTML = fieldsHtml;
+            document.getElementById("dynamicForm").addEventListener("submit", submitFormStandard);
+        }
+
+        function loadAnggotaChecklist() {
+            const listContainer = document.getElementById("daftarAnggotaChecklist");
+            const personelRef = ref(db, "personel");
+
+            get(personelRef).then((snapshot) => {
+                const data = snapshot.val();
+                listContainer.innerHTML = "";
+
+                if (!data) {
+                    listContainer.innerHTML = `<div class="text-center py-3 text-danger small">Belum ada data personel! Isi data personel terlebih dahulu.</div>`;
+                    return;
+                }
+
+                let idx = 0;
+                Object.keys(data).forEach((key) => {
+                    const p = data[key];
+                    idx++;
+                    listContainer.innerHTML += `
+                        <div class="absen-row">
+                            <div class="fw-bold small text-dark mb-1">${idx}. ${p.nama || 'Anggota'} <small class="text-muted">(${p.nbp_npm || '-'})</small></div>
+                            <div class="d-flex gap-2">
+                                <div class="form-check form-check-inline mb-0">
+                                    <input class="form-check-input" type="radio" name="absen_${key}" value="Hadir" id="h_${key}" checked>
+                                    <label class="form-check-label small text-success fw-bold" for="h_${key}">Hadir</label>
+                                </div>
+                                <div class="form-check form-check-inline mb-0">
+                                    <input class="form-check-input" type="radio" name="absen_${key}" value="Izin" id="i_${key}">
+                                    <label class="form-check-label small text-warning fw-bold" for="i_${key}">Izin</label>
+                                </div>
+                                <div class="form-check form-check-inline mb-0">
+                                    <input class="form-check-input" type="radio" name="absen_${key}" value="Sakit" id="s_${key}">
+                                    <label class="form-check-label small text-info fw-bold" for="s_${key}">Sakit</label>
+                                </div>
+                                <div class="form-check form-check-inline mb-0">
+                                    <input class="form-check-input" type="radio" name="absen_${key}" value="TK" id="tk_${key}">
+                                    <label class="form-check-label small text-danger fw-bold" for="tk_${key}">TK</label>
+                                </div>
+                            </div>
+                            <input type="hidden" id="nama_${key}" value="${p.nama || 'Anggota'}">
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        function simpanAbsenMassal(e) {
+            e.preventDefault();
+            const keg = document.getElementById("absenKegiatan").value;
+            const tgl = document.getElementById("absenTanggal").value;
+
+            const rows = document.querySelectorAll(".absen-row");
+            if (rows.length === 0) { alert("Tidak ada anggota untuk diabsen!"); return; }
+
+            const absensiRef = ref(db, "absensi");
+            let count = 0;
+
+            rows.forEach(row => {
+                const radioChecked = row.querySelector("input[type='radio']:checked");
+                const key = radioChecked.name.replace("absen_", "");
+                const namaAnggota = document.getElementById(`nama_${key}`).value;
+                const st = radioChecked.value;
+
+                const payload = {
+                    kegiatan_ref: keg,
+                    tanggal: tgl,
+                    nama_anggota: namaAnggota,
+                    status_absen: st,
+                    keterangan: st === "Hadir" ? "-" : st,
+                    created_at: new Date().toISOString(),
+                    created_by: currentUser ? currentUser.name : "Personalia"
+                };
+
+                push(absensiRef, payload);
+                count++;
+            });
+
+            alert(`Berhasil menyimpan presensi ${count} anggota untuk kegiatan "${keg}"!`);
+            document.getElementById("formAbsenMassal").reset();
+            loadAnggotaChecklist();
+        }
+
+        function listenRealtimeData() {
+            const config = schema[currentCategory];
+            const dataRef = ref(db, currentCategory);
+
+            onValue(dataRef, (snapshot) => {
+                rawDataStore = snapshot.val() || {};
+                renderTable(rawDataStore);
+            });
+        }
+
+        function renderTable(dataObj) {
+            const config = schema[currentCategory];
+            const thead = document.getElementById("tableHead");
+            
+            const canDelete = currentUser ? currentUser.canDelete : false;
+            const aksiHeader = canDelete ? `<th class="text-center">Aksi</th>` : ``;
+
+            thead.innerHTML = `<tr>${config.headers.map(h => `<th>${h}</th>`).join("")}${aksiHeader}</tr>`;
+
+            const tbody = document.getElementById("tableBody");
+            tbody.innerHTML = "";
+
+            if (!dataObj || Object.keys(dataObj).length === 0) {
+                const colSpan = canDelete ? config.headers.length + 1 : config.headers.length;
+                tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-4 text-muted">Belum ada data di kategori ini.</td></tr>`;
+                return;
+            }
+
+            Object.keys(dataObj).forEach((key) => {
+                const item = dataObj[key];
+                let colsHtml = "";
+
+                if(currentCategory === 'bebas') {
+                    const dateStr = item.created_at ? new Date(item.created_at).toLocaleDateString('id-ID') : '-';
+                    colsHtml = `<td><strong>${item.judul || '-'}</strong></td><td><span class="badge bg-secondary">${item.kategori || '-'}</span></td><td>${item.keterangan || '-'}</td><td>${dateStr}</td>`;
+                } else if(currentCategory === 'absensi') {
+                    let bClass = 'bg-success';
+                    if(item.status_absen === 'TK') bClass = 'bg-danger';
+                    if(item.status_absen === 'Izin' || item.status_absen === 'Sakit') bClass = 'bg-warning text-dark';
+
+                    colsHtml = `
+                        <td><strong>${item.kegiatan_ref || '-'}</strong></td>
+                        <td>${item.tanggal || '-'}</td>
+                        <td>${item.nama_anggota || '-'}</td>
+                        <td><span class="badge ${bClass}">${item.status_absen || '-'}</span></td>
+                        <td>${item.keterangan || '-'}</td>
+                    `;
+                } else if(currentCategory === 'akademik') {
+                    colsHtml = `
+                        <td><strong>${item.agenda || '-'}</strong></td>
+                        <td>${item.tgl_mulai || '-'}</td>
+                        <td>${item.tgl_selesai || '-'}</td>
+                        <td><span class="badge bg-info text-dark">${item.kategori || '-'}</span></td>
+                        <td>${item.keterangan || '-'}</td>
+                    `;
+                } else {
+                    config.fields.forEach(f => {
+                        let val = item[f.key] || item.nta || "-";
+                        if(f.key === 'status') {
+                            let bClass = 'bg-primary';
+                            if(val === 'Selesai' || val === 'Aktif') bClass = 'bg-success';
+                            if(val === 'Dibatalkan' || val === 'Demisioner') bClass = 'bg-danger';
+                            if(val === 'Berjalan') bClass = 'bg-warning text-dark';
+                            val = `<span class="badge ${bClass}">${val}</span>`;
+                        } else if(f.type === 'url' && val !== '-') {
+                            val = `<a href="${val}" target="_blank" class="btn btn-xs btn-outline-primary py-0"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka</a>`;
+                        }
+                        colsHtml += `<td>${val}</td>`;
+                    });
+                }
+
+                const aksiBtn = canDelete ? `<td class="text-center"><button class="btn btn-sm btn-outline-danger" onclick="hapusData('${key}')"><i class="fa-solid fa-trash"></i></button></td>` : ``;
+                const row = `<tr>${colsHtml}${aksiBtn}</tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        window.filterData = function() {
+            const query = document.getElementById("searchInput").value.toLowerCase();
+            if (!query) {
+                renderTable(rawDataStore);
+                return;
+            }
+
+            const filtered = {};
+            Object.keys(rawDataStore).forEach(key => {
+                const item = rawDataStore[key];
+                const itemStr = JSON.stringify(item).toLowerCase();
+                if (itemStr.includes(query)) {
+                    filtered[key] = item;
+                }
+            });
+            renderTable(filtered);
+        };
+
+        function submitFormStandard(e) {
+            e.preventDefault();
+            const config = schema[currentCategory];
+            const payload = { 
+                created_at: new Date().toISOString(),
+                created_by: currentUser ? currentUser.name : "System"
+            };
+
+            config.fields.forEach(f => {
+                payload[f.key] = document.getElementById(f.id).value;
+            });
+
+            const dataRef = ref(db, currentCategory);
+            push(dataRef, payload).then(() => {
+                document.getElementById("dynamicForm").reset();
+            }).catch(err => alert("Gagal menyimpan data: " + err.message));
+        }
+
+        window.prosesImporExcel = function(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+                if (rows.length === 0) {
+                    alert("File Excel kosong!");
+                    return;
+                }
+
+                if (confirm(`Unggah ${rows.length} data dari Excel ke kategori ${schema[currentCategory].title}?`)) {
+                    const dataRef = ref(db, currentCategory);
+                    rows.forEach((row) => {
+                        const payload = { 
+                            created_at: new Date().toISOString(),
+                            created_by: currentUser ? currentUser.name : "System Excel"
+                        };
+                        schema[currentCategory].fields.forEach(f => {
+                            payload[f.key] = row[f.key] || row[f.label] || row[f.key.toLowerCase()] || "-";
+                        });
+                        push(dataRef, payload);
+                    });
+                    alert(`Berhasil mengimpor ${rows.length} baris data ke Cloud!`);
+                    input.value = "";
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        window.hapusData = function(key) {
+            if (!currentUser || !currentUser.canDelete) {
+                alert("Akses Ditolak: Hanya Komandan/Wadan yang diizinkan menghapus data!");
+                return;
+            }
+
+            if (confirm("Hapus data ini dari cloud secara permanen?")) {
+                const itemRef = ref(db, `${currentCategory}/${key}`);
+                remove(itemRef);
+            }
+        };
+
+        window.exportExcel = function() {
+            const list = Object.values(rawDataStore);
+            if (list.length === 0) { alert("Tidak ada data untuk diekspor!"); return; }
+            const worksheet = XLSX.utils.json_to_sheet(list);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, currentCategory);
+            XLSX.writeFile(workbook, `Data_${currentCategory}_SIMENWA809.xlsx`);
+        };
+
+        renderForm();
+        listenRealtimeData();
+    </script>
+</body>
+</html>

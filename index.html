@@ -28,18 +28,24 @@
             display: flex; justify-content: center; align-items: center;
         }
         .absen-row { background: #fff; padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #e2e8f0; }
+        
+        /* Stylist Logo Image Container */
+        .logo-nav-img { height: 42px; width: auto; max-width: 55px; object-fit: contain; }
+        .logo-login-img { height: 110px; width: auto; max-width: 140px; object-fit: contain; margin-bottom: 12px; filter: drop-shadow(0px 4px 8px rgba(0,0,0,0.35)); }
     </style>
 </head>
 <body>
 
-    <!-- OVERLAY LOGIN -->
+    <!-- OVERLAY LOGIN DENGAN LOGO SATUAN 809 -->
     <div id="loginOverlay">
         <div class="card p-4 shadow-lg" style="max-width: 420px; width: 90%; border-top: 4px solid var(--accent-gold);">
-            <div class="text-center mb-3 text-warning">
-                <i class="fa-solid fa-shield-halved fs-1"></i>
+            <div class="text-center mb-1">
+                <!-- Tampilan Logo Resmi Satuan 809 STIESIA -->
+                <img src="20251127_194600 (1).jpg" alt="Logo Satuan 809" class="logo-login-img" onerror="this.onerror=null; this.src='logo.png'; this.onerror=function(){this.style.display='none'; document.getElementById('loginFallbackIcon').classList.remove('d-none');};">
+                <i id="loginFallbackIcon" class="fa-solid fa-shield-halved text-warning fs-1 d-none mb-2"></i>
             </div>
             <h4 class="fw-bold text-dark text-center mb-1">SIMENWA SATUAN 809</h4>
-            <p class="text-muted small text-center mb-4">Portal Log In Pengurus & Komando</p>
+            <p class="text-muted small text-center mb-4">Portal Log In Pengurus & Komando STIESIA</p>
 
             <form id="formLogin">
                 <div class="mb-3">
@@ -64,8 +70,10 @@
         <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top shadow-sm">
             <div class="container">
                 <a class="navbar-brand brand-logo d-flex align-items-center gap-2" href="#">
-                    <i class="fa-solid fa-shield-halved text-warning fs-3"></i>
-                    <span>SIMENWA 809 <small class="fs-6 fw-normal text-warning">(V8 - KETERANGAN PRESENSI)</small></span>
+                    <!-- Logo Satuan di Navbar Header -->
+                    <img src="20251127_194600 (1).jpg" alt="Logo Satuan 809" class="logo-nav-img" onerror="this.onerror=null; this.src='logo.png'; this.onerror=function(){this.style.display='none'; document.getElementById('brandFallbackIcon').classList.remove('d-none');};">
+                    <i id="brandFallbackIcon" class="fa-solid fa-shield-halved text-warning fs-3 d-none"></i>
+                    <span>SIMENWA 809 <small class="fs-6 fw-normal text-warning">(V9 - LOGO SATUAN)</small></span>
                 </a>
                 <div class="ms-auto d-flex align-items-center gap-3">
                     <span id="badgeUserRole" class="badge bg-warning text-dark px-3 py-2 rounded-pill fw-bold"></span>
@@ -500,7 +508,6 @@
                 const namaAnggota = document.getElementById(`nama_${key}`).value;
                 const st = radioChecked.value;
                 
-                // Ambil Keterangan Kustom (misal: Terlambat)
                 let ketCustom = document.getElementById(`ket_${key}`).value.trim();
                 if (!ketCustom) {
                     ketCustom = "-";
